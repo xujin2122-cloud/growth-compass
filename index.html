@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<!-- saved from url=(0076)file:///C:/Users/41398/Downloads/%E6%88%90%E9%95%BF%E7%BD%97%E7%9B%98_2.html -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成长罗盘</title>
+<link href="./成长罗盘_files/css2" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1410; --paper: #f5f0e8; --accent: #c4622d; --accent-light: #e8956a;
+    --gold: #b8952a; --muted: #8a7968; --success: #3d7a5a; --fail: #8b2e2e; --border: #c8bfaf;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Noto Serif SC',serif; background:var(--paper); color:var(--ink); min-height:100vh;
+    background-image: repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(184,149,42,0.08) 28px),
+      radial-gradient(ellipse at 10% 0%,rgba(196,98,45,0.05) 0%,transparent 60%),
+      radial-gradient(ellipse at 90% 100%,rgba(61,122,90,0.05) 0%,transparent 60%); }
+  .app { display:flex; min-height:100vh; }
+  .sidebar { width:200px; min-height:100vh; background:var(--ink); color:var(--paper);
+    padding:28px 0; position:fixed; top:0; left:0; display:flex; flex-direction:column; z-index:100; }
+  .logo { padding:0 20px 24px; border-bottom:1px solid rgba(245,240,232,0.1); margin-bottom:20px; }
+  .logo-title { font-size:18px; font-weight:700; letter-spacing:4px; color:var(--paper); }
+  .logo-sub { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:2px; margin-top:4px; }
+  .nav-item { padding:10px 20px; cursor:pointer; font-size:13px; letter-spacing:2px;
+    color:rgba(245,240,232,0.6); transition:all 0.2s; display:flex; align-items:center; gap:10px; border-left:2px solid transparent; }
+  .nav-item:hover { color:var(--paper); background:rgba(245,240,232,0.05); }
+  .nav-item.active { color:var(--accent-light); border-left-color:var(--accent); background:rgba(196,98,45,0.1); }
+  .nav-icon { font-size:15px; width:18px; text-align:center; }
+  .sidebar-footer { margin-top:auto; padding:16px 20px; border-top:1px solid rgba(245,240,232,0.1);
+    font-family:'Space Mono',monospace; font-size:9px; color:rgba(245,240,232,0.3); }
+  .sync-bar { display:flex; align-items:center; gap:7px; margin-bottom:10px; }
+  .sync-dot { width:7px; height:7px; border-radius:50%; background:#555; flex-shrink:0; transition:background 0.3s; }
+  .sync-dot.synced { background:var(--success); }
+  .sync-dot.syncing { background:var(--gold); animation:pulse 1s infinite; }
+  .sync-dot.error { background:var(--fail); }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+  .sync-text { font-size:9px; letter-spacing:1px; color:rgba(245,240,232,0.4); flex:1; line-height:1.3; }
+  .sync-btn { font-size:9px; padding:3px 7px; border:1px solid rgba(245,240,232,0.2);
+    border-radius:1px; cursor:pointer; color:rgba(245,240,232,0.5); transition:all 0.2s; background:transparent; white-space:nowrap; }
+  .sync-btn:hover { background:rgba(245,240,232,0.08); color:var(--paper); }
+  .bak-btns { display:flex; gap:6px; margin-bottom:8px; }
+  .bak-btn { flex:1; text-align:center; padding:5px; border:1px solid rgba(245,240,232,0.15);
+    border-radius:1px; cursor:pointer; font-size:9px; letter-spacing:1px; color:rgba(245,240,232,0.5); transition:all 0.2s; }
+  .bak-btn:hover { color:var(--paper); background:rgba(245,240,232,0.08); }
+
+  /* SETUP */
+  #setup-screen { position:fixed; inset:0; background:rgba(26,20,16,0.7); z-index:500;
+    display:none; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+  .setup-box { width:500px; max-width:95vw; max-height:90vh; overflow-y:auto;
+    background:var(--paper); border:1px solid var(--border); border-radius:2px; padding:40px 44px; }
+  .setup-title { font-size:20px; font-weight:700; letter-spacing:2px; margin-bottom:6px; }
+  .setup-sub { font-size:13px; color:var(--muted); line-height:1.8; margin-bottom:28px; }
+  .setup-step { display:flex; gap:14px; margin-bottom:16px; align-items:flex-start; }
+  .step-num { font-family:'Space Mono',monospace; font-size:10px; color:var(--accent);
+    border:1px solid var(--accent); width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+  .step-desc { font-size:13px; line-height:1.8; color:var(--ink); }
+  .step-desc a { color:var(--accent); }
+  .step-desc code { background:rgba(196,98,45,0.08); padding:1px 5px; border-radius:2px; font-size:11px; }
+  .setup-field { display:flex; gap:10px; margin-top:24px; }
+  .setup-input { flex:1; background:white; border:1px solid var(--border); border-radius:1px;
+    padding:10px 14px; font-family:'Space Mono',monospace; font-size:11px; color:var(--ink); outline:none; }
+  .setup-input:focus { border-color:var(--accent); }
+  .setup-note { font-size:11px; color:var(--muted); margin-top:14px; line-height:1.7; }
+  .setup-skip { color:var(--accent); cursor:pointer; text-decoration:underline; }
+
+  /* MAIN */
+  .main { margin-left:200px; flex:1; padding:36px 44px; max-width:calc(100vw - 200px); }
+  .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; }
+  .page-title { font-size:26px; font-weight:700; letter-spacing:2px; }
+  .page-date { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); margin-top:4px; }
+  .section { display:none; }
+  .section.active { display:block; }
+  .card { background:rgba(255,255,255,0.6); border:1px solid var(--border); border-radius:2px;
+    padding:20px 24px; margin-bottom:16px; position:relative; transition:box-shadow 0.2s; }
+  .card:hover { box-shadow:4px 4px 0 var(--border); }
+  .goals-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .goal-card { background:rgba(255,255,255,0.6); border:1px solid var(--border); border-radius:2px;
+    padding:18px 20px; position:relative; transition:all 0.2s; }
+  .goal-card:hover { box-shadow:4px 4px 0 var(--border); transform:translate(-1px,-1px); }
+  .goal-card.long-term { border-left:3px solid var(--gold); }
+  .goal-card.stage { border-left:3px solid var(--accent); }
+  .goal-card.complete { opacity:0.6; }
+  .goal-card.complete .goal-title { text-decoration:line-through; }
+  .goal-tag { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px;
+    padding:2px 7px; border-radius:1px; display:inline-block; margin-bottom:8px; }
+  .tag-long { background:rgba(184,149,42,0.15); color:var(--gold); }
+  .tag-stage { background:rgba(196,98,45,0.12); color:var(--accent); }
+  .goal-title { font-size:14px; font-weight:600; line-height:1.5; margin-bottom:6px; }
+  .goal-desc { font-size:12px; color:var(--muted); line-height:1.7; }
+  .goal-deadline { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); margin-top:10px; }
+  .goal-actions { position:absolute; top:12px; right:12px; display:flex; gap:6px; opacity:0; transition:opacity 0.2s; }
+  .goal-card:hover .goal-actions { opacity:1; }
+  .btn-icon { width:26px; height:26px; border:1px solid var(--border); border-radius:1px;
+    background:var(--paper); cursor:pointer; font-size:11px;
+    display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+  .btn-icon:hover { background:var(--ink); color:var(--paper); }
+  .day-block { border:1px solid var(--border); border-radius:2px; background:rgba(255,255,255,0.55); margin-bottom:12px; overflow:hidden; }
+  .day-header { display:flex; align-items:center; justify-content:space-between;
+    padding:12px 18px; cursor:pointer; background:rgba(255,255,255,0.4);
+    border-bottom:1px solid transparent; transition:background 0.2s; user-select:none; }
+  .day-header:hover { background:rgba(255,255,255,0.7); }
+  .day-header.open { border-bottom-color:var(--border); }
+  .day-date { font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:1px; }
+  .day-summary { display:flex; gap:8px; }
+  .summary-pill { padding:2px 8px; border-radius:10px; font-family:'Space Mono',monospace; font-size:9px; }
+  .pill-win { background:rgba(61,122,90,0.12); color:var(--success); }
+  .pill-fail { background:rgba(139,46,46,0.1); color:var(--fail); }
+  .day-body { padding:16px 18px; display:none; }
+  .day-body.open { display:block; }
+  .log-item { padding:10px 0; border-bottom:1px dashed rgba(200,191,175,0.5); display:flex; gap:10px; align-items:flex-start; }
+  .log-item:last-child { border-bottom:none; }
+  .log-dot { width:6px; height:6px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .dot-win { background:var(--success); }
+  .dot-fail { background:var(--fail); }
+  .log-content { flex:1; }
+  .log-text { font-size:13px; line-height:1.6; }
+  .log-redo { font-size:12px; color:var(--muted); margin-top:6px; padding-top:6px; border-top:1px solid var(--border); font-style:italic; }
+  .log-redo-label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--accent); display:block; margin-bottom:3px; font-style:normal; }
+  .btn { font-family:'Noto Serif SC',serif; font-size:13px; padding:9px 18px; border-radius:1px; cursor:pointer; transition:all 0.2s; letter-spacing:1px; }
+  .btn-primary { background:var(--ink); color:var(--paper); border:1px solid var(--ink); }
+  .btn-primary:hover { background:var(--accent); border-color:var(--accent); }
+  .btn-outline { background:transparent; color:var(--ink); border:1px solid var(--border); }
+  .btn-outline:hover { border-color:var(--ink); }
+  .modal-overlay { position:fixed; inset:0; background:rgba(26,20,16,0.6); z-index:200;
+    display:none; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--paper); border:1px solid var(--border); border-radius:2px;
+    padding:32px 36px; width:520px; max-width:95vw; max-height:85vh; overflow-y:auto; animation:modalIn 0.2s ease; }
+  @keyframes modalIn { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+  .modal-title { font-size:17px; font-weight:700; letter-spacing:2px; margin-bottom:22px; }
+  .form-group { margin-bottom:16px; }
+  .form-label { display:block; font-size:10px; letter-spacing:2px; font-family:'Space Mono',monospace;
+    color:var(--muted); margin-bottom:7px; text-transform:uppercase; }
+  .form-input,.form-textarea { width:100%; background:rgba(255,255,255,0.8); border:1px solid var(--border);
+    border-radius:1px; padding:9px 12px; font-family:'Noto Serif SC',serif; font-size:13px;
+    color:var(--ink); outline:none; transition:border-color 0.2s; }
+  .form-input:focus,.form-textarea:focus { border-color:var(--accent); background:white; }
+  .form-textarea { resize:vertical; min-height:75px; line-height:1.6; }
+  .form-row { display:flex; gap:10px; }
+  .form-row .form-group { flex:1; }
+  .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:24px; }
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+  .stat-card { background:rgba(255,255,255,0.6); border:1px solid var(--border); border-radius:2px; padding:18px; text-align:center; }
+  .stat-num { font-family:'Space Mono',monospace; font-size:26px; font-weight:700; letter-spacing:-1px; }
+  .stat-num.gold{color:var(--gold)} .stat-num.orange{color:var(--accent)} .stat-num.green{color:var(--success)} .stat-num.red{color:var(--fail)}
+  .stat-label { font-size:10px; color:var(--muted); margin-top:4px; }
+  .type-toggle { display:flex; margin-bottom:18px; }
+  .type-toggle label { flex:1; text-align:center; padding:9px; border:1px solid var(--border);
+    cursor:pointer; font-size:12px; letter-spacing:1px; transition:all 0.2s; color:var(--muted); }
+  .type-toggle label:first-of-type { border-radius:1px 0 0 1px; }
+  .type-toggle label:last-of-type { border-radius:0 1px 1px 0; border-left:none; }
+  .type-toggle input { display:none; }
+  .type-toggle input:checked + label { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .empty-state { text-align:center; padding:40px; color:var(--muted); font-size:13px; }
+  .empty-icon { font-size:32px; margin-bottom:10px; opacity:0.4; }
+  .divider { display:flex; align-items:center; gap:10px; margin:24px 0; color:var(--muted);
+    font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; }
+  .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .section-title { font-size:14px; font-weight:600; letter-spacing:2px; }
+  .progress-bar { height:3px; background:var(--border); border-radius:2px; margin-top:8px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:2px; transition:width 0.4s ease; }
+  .fill-gold{background:var(--gold)} .fill-accent{background:var(--accent)}
+  ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  @media(max-width:800px){.sidebar{width:160px}.main{margin-left:160px;padding:20px}.goals-grid{grid-template-columns:1fr}.stats-row{grid-template-columns:repeat(2,1fr)}}
+</style>
+<style id="googleidentityservice_button_styles">.qJTHM{-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;color:#202124;direction:ltr;-webkit-touch-callout:none;font-family:Roboto-Regular,arial,sans-serif;-webkit-font-smoothing:antialiased;font-weight:400;margin:0;overflow:hidden;-webkit-text-size-adjust:100%}.ynRLnc{left:-9999px;position:absolute;top:-9999px}.L6cTce{display:none}.bltWBb{overflow-wrap:break-word;word-break:break-word}.hSRGPd{color:#1a73e8;cursor:pointer;font-weight:500;text-decoration:none}.Bz112c-W3lGp{height:16px;width:16px}.Bz112c-E3DyYd{height:20px;width:20px}.Bz112c-r9oPif{height:24px;width:24px}.Bz112c-u2z5K{height:36px;width:36px}.Bz112c-uaxL4e{border-radius:10px}.LgbsSe-Bz112c{display:block}.S9gUrf-YoZ4jf{border:none;margin:0;padding:0}.S9gUrf-YoZ4jf *{border:none;margin:0;padding:0}.fFW7wc-ibnC6b>.aZ2wEe>div{border-color:#4285f4}.P1ekSe-ZMv3u{-webkit-transition:height .2s linear;transition:height .2s linear}.P1ekSe-ZMv3u>div:first-child{background-color:#1a73e8!important;-webkit-transition:width .3s linear;transition:width .3s linear}.P1ekSe-ZMv3u>div:nth-child(2){background-image:-webkit-gradient(linear,left top,right top,from(rgba(255,255,255,.7)),to(rgba(255,255,255,.7))),-webkit-gradient(linear,left top,right top,from(#1a73e8),to(#1a73e8))!important;background-image:-webkit-linear-gradient(left,rgba(255,255,255,.7),rgba(255,255,255,.7)),-webkit-linear-gradient(left,#1a73e8,#1a73e8)!important;background-image:linear-gradient(90deg,rgba(255,255,255,.7),rgba(255,255,255,.7)),linear-gradient(90deg,#1a73e8,#1a73e8)!important}.P1ekSe-ZMv3u>div:nth-child(3){background-image:-webkit-gradient(linear,left top,right top,from(rgba(255,255,255,.7)),to(rgba(255,255,255,.7))),-webkit-gradient(linear,left top,right top,from(#1a73e8),to(#1a73e8))!important;background-image:-webkit-linear-gradient(left,rgba(255,255,255,.7),rgba(255,255,255,.7)),-webkit-linear-gradient(left,#1a73e8,#1a73e8)!important;background-image:linear-gradient(90deg,rgba(255,255,255,.7),rgba(255,255,255,.7)),linear-gradient(90deg,#1a73e8,#1a73e8)!important}.haAclf{display:inline-block}.nsm7Bb-HzV7m-LgbsSe{border-radius:4px;box-sizing:border-box;-webkit-transition:background-color .218s,border-color .218s;transition:background-color .218s,border-color .218s;-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;-webkit-appearance:none;background-color:#fff;background-image:none;border:1px solid #dadce0;color:#3c4043;cursor:pointer;font-family:Google Sans,arial,sans-serif;font-size:14px;height:40px;letter-spacing:.25px;outline:none;overflow:hidden;padding:0 12px;position:relative;text-align:center;vertical-align:middle;white-space:nowrap;width:auto}@media screen and (-ms-high-contrast:active){.nsm7Bb-HzV7m-LgbsSe{border:2px solid windowText;color:windowText}}@media screen and (preferes-contrast:more){.nsm7Bb-HzV7m-LgbsSe{color:#000}}.nsm7Bb-HzV7m-LgbsSe.pSzOP-SxQuSe{font-size:14px;height:32px;letter-spacing:.25px;padding:0 10px}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe{font-size:11px;height:20px;letter-spacing:.3px;padding:0 8px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe{padding:0;width:40px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe.pSzOP-SxQuSe{width:32px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe.purZT-SxQuSe{width:20px}.nsm7Bb-HzV7m-LgbsSe.JGcpL-RbRzK{border-radius:20px}.nsm7Bb-HzV7m-LgbsSe.JGcpL-RbRzK.pSzOP-SxQuSe{border-radius:16px}.nsm7Bb-HzV7m-LgbsSe.JGcpL-RbRzK.purZT-SxQuSe{border-radius:10px}.nsm7Bb-HzV7m-LgbsSe.MFS4be-Ia7Qfc{border:none;color:#fff}.nsm7Bb-HzV7m-LgbsSe.MFS4be-v3pZbf-Ia7Qfc{background-color:#1a73e8}.nsm7Bb-HzV7m-LgbsSe.MFS4be-JaPV2b-Ia7Qfc{background-color:#202124;color:#e8eaed}@media screen and (prefers-contrast:more){.nsm7Bb-HzV7m-LgbsSe.MFS4be-JaPV2b-Ia7Qfc{color:#fff}}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{height:18px;margin-right:8px;min-width:18px;width:18px}.nsm7Bb-HzV7m-LgbsSe.pSzOP-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{height:14px;min-width:14px;width:14px}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{height:10px;min-width:10px;width:10px}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-Bz112c{margin-left:8px;margin-right:-4px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{margin:0;padding:10px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe.pSzOP-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{padding:8px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe.purZT-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c{padding:4px}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-top-left-radius:3px;border-bottom-left-radius:3px;display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-pack:center;-webkit-justify-content:center;justify-content:center;-webkit-box-align:center;-webkit-align-items:center;align-items:center;background-color:#fff;height:36px;margin-left:-10px;margin-right:12px;min-width:36px;width:36px}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf .nsm7Bb-HzV7m-LgbsSe-Bz112c,.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf .nsm7Bb-HzV7m-LgbsSe-Bz112c{margin:0;padding:0}.nsm7Bb-HzV7m-LgbsSe.pSzOP-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{height:28px;margin-left:-8px;margin-right:10px;min-width:28px;width:28px}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{height:16px;margin-left:-6px;margin-right:8px;min-width:16px;width:16px}.nsm7Bb-HzV7m-LgbsSe.Bz112c-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:3px;margin-left:2px;margin-right:0;padding:0}.nsm7Bb-HzV7m-LgbsSe.JGcpL-RbRzK .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:18px}.nsm7Bb-HzV7m-LgbsSe.pSzOP-SxQuSe.JGcpL-RbRzK .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:14px}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe.JGcpL-RbRzK .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:8px}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-bN97Pc-sM5MNb{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-align-items:center;-webkit-box-align:center;align-items:center;-webkit-flex-direction:row;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;-webkit-box-pack:justify;-webkit-justify-content:space-between;justify-content:space-between;-webkit-flex-wrap:nowrap;flex-wrap:nowrap;height:100%;position:relative;width:100%}.nsm7Bb-HzV7m-LgbsSe .oXtfBe-l4eHX{-webkit-box-pack:center;-webkit-justify-content:center;justify-content:center}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-BPrWId{-webkit-flex-grow:1;-webkit-box-flex:1;flex-grow:1;font-family:Google Sans,arial,sans-serif;font-weight:500;overflow:hidden;text-overflow:ellipsis;vertical-align:top}.nsm7Bb-HzV7m-LgbsSe.purZT-SxQuSe .nsm7Bb-HzV7m-LgbsSe-BPrWId{font-weight:300}.nsm7Bb-HzV7m-LgbsSe .oXtfBe-l4eHX .nsm7Bb-HzV7m-LgbsSe-BPrWId{-webkit-flex-grow:0;-webkit-box-flex:0;flex-grow:0}.nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-MJoBVe{-webkit-transition:background-color .218s;transition:background-color .218s;bottom:0;left:0;position:absolute;right:0;top:0}.nsm7Bb-HzV7m-LgbsSe:focus,.nsm7Bb-HzV7m-LgbsSe:hover{box-shadow:none;border-color:rgb(210,227,252);outline:none}.nsm7Bb-HzV7m-LgbsSe:focus-within{outline:2px solid #00639b;border-color:transparent}.nsm7Bb-HzV7m-LgbsSe:hover .nsm7Bb-HzV7m-LgbsSe-MJoBVe{background:rgba(66,133,244,.08)}.nsm7Bb-HzV7m-LgbsSe:active .nsm7Bb-HzV7m-LgbsSe-MJoBVe,.nsm7Bb-HzV7m-LgbsSe:focus .nsm7Bb-HzV7m-LgbsSe-MJoBVe{background:rgba(66,133,244,.1)}.nsm7Bb-HzV7m-LgbsSe.MFS4be-Ia7Qfc:hover .nsm7Bb-HzV7m-LgbsSe-MJoBVe{background:rgba(255,255,255,.24)}.nsm7Bb-HzV7m-LgbsSe.MFS4be-Ia7Qfc:active .nsm7Bb-HzV7m-LgbsSe-MJoBVe,.nsm7Bb-HzV7m-LgbsSe.MFS4be-Ia7Qfc:focus .nsm7Bb-HzV7m-LgbsSe-MJoBVe{background:rgba(255,255,255,.32)}.nsm7Bb-HzV7m-LgbsSe .n1UuX-DkfjY{border-radius:50%;display:-webkit-box;display:-webkit-flex;display:flex;height:20px;margin-left:-4px;margin-right:8px;min-width:20px;width:20px}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId{font-family:Roboto;font-size:12px;text-align:left}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff .fmcmS,.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .ssJRIf{overflow:hidden;text-overflow:ellipsis}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-align-items:center;-webkit-box-align:center;align-items:center;color:#5f6368;fill:#5f6368;font-size:11px;font-weight:400}.nsm7Bb-HzV7m-LgbsSe.jVeSEe.MFS4be-Ia7Qfc .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff{color:#e8eaed;fill:#e8eaed}@media screen and (prefers-contrast:more){.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff,.nsm7Bb-HzV7m-LgbsSe.jVeSEe.MFS4be-Ia7Qfc .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff{color:#000;fill:#000}}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-BPrWId .K4efff .Bz112c{height:18px;margin:-3px -3px -3px 2px;min-width:18px;width:18px}.nsm7Bb-HzV7m-LgbsSe.jVeSEe .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-top-left-radius:0;border-bottom-left-radius:0;border-top-right-radius:3px;border-bottom-right-radius:3px;margin-left:12px;margin-right:-10px}.nsm7Bb-HzV7m-LgbsSe.jVeSEe.JGcpL-RbRzK .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf{border-radius:18px}.L5Fo6c-sM5MNb{border:0;display:block;left:0;position:relative;top:0}.L5Fo6c-bF1uUb{border-radius:4px;bottom:0;cursor:pointer;left:0;position:absolute;right:0;top:0}.L5Fo6c-bF1uUb:focus{border:none;outline:none}sentinel{}</style></head>
+<body>
+
+<!-- SETUP OVERLAY -->
+<div id="setup-screen" style="display: flex;">
+  <div class="setup-box">
+    <div class="setup-title">连接 Google Drive 同步</div>
+    <div class="setup-sub">配置一次，之后数据自动同步到你的 Google Drive，平板和电脑都能访问同一份数据。</div>
+
+    <div class="setup-step">
+      <div class="step-num">1</div>
+      <div class="step-desc">打开 <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>，用你的 Google 账号登录，新建一个项目（名字随意）</div>
+    </div>
+    <div class="setup-step">
+      <div class="step-num">2</div>
+      <div class="step-desc">左侧菜单 → <strong>API 和服务 → 库</strong>，搜索 <strong>Google Drive API</strong> 并启用</div>
+    </div>
+    <div class="setup-step">
+      <div class="step-num">3</div>
+      <div class="step-desc">左侧 → <strong>凭据</strong> → 点击「创建凭据」→ 选 <strong>OAuth 客户端 ID</strong> → 应用类型选「<strong>Web 应用</strong>」<br>在「已获授权的 JavaScript 来源」填入你打开此文件的网址（如果是本地文件请先将此 HTML 上传到 GitHub Pages）</div>
+    </div>
+    <div class="setup-step">
+      <div class="step-num">4</div>
+      <div class="step-desc">创建后复制「<strong>客户端 ID</strong>」，粘贴到下方</div>
+    </div>
+
+    <div class="setup-field">
+      <input class="setup-input" id="client-id-input" placeholder="粘贴 OAuth 客户端 ID，格式如 xxxx.apps.googleusercontent.com">
+      <button class="btn btn-primary" onclick="saveClientId()">连接</button>
+    </div>
+    <div class="setup-note">
+      ⚠️ Google OAuth 在本地 <code>file://</code> 协议下无法工作，需要通过 HTTP/HTTPS 访问。最简单的免费方案：将此 HTML 上传到 <a href="https://pages.github.com/" target="_blank" style="color:var(--accent)">GitHub Pages</a>，获得一个 https:// 网址。<br><br>
+      <span class="setup-skip" onclick="skipSetup()">暂时跳过，使用本地模式（不同步）</span>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-title">成长罗盘</div>
+      <div class="logo-sub">GROWTH COMPASS</div>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="switchSection(&#39;overview&#39;)"><span class="nav-icon">◎</span> 总览</div>
+      <div class="nav-item" onclick="switchSection(&#39;goals&#39;)"><span class="nav-icon">◈</span> 目标体系</div>
+      <div class="nav-item" onclick="switchSection(&#39;daily&#39;)"><span class="nav-icon">◇</span> 每日复盘</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-bar">
+        <div class="sync-dot" id="sync-dot"></div>
+        <div class="sync-text" id="sync-text">本地模式</div>
+        <button class="sync-btn" id="sync-btn" onclick="handleSyncBtn()">设置</button>
+      </div>
+      <div class="bak-btns">
+        <div class="bak-btn" onclick="exportData()">↓ 导出</div>
+        <div class="bak-btn" onclick="importData()">↑ 导入</div>
+      </div>
+      <span id="entry-count">0</span> ENTRIES
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="section active" id="section-overview">
+      <div class="page-header">
+        <div><div class="page-title">总览</div><div class="page-date" id="today-date">2026年5月18日星期一</div></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num gold" id="stat-long">0</div><div class="stat-label">长期目标</div></div>
+        <div class="stat-card"><div class="stat-num orange" id="stat-stage">0</div><div class="stat-label">阶段目标</div></div>
+        <div class="stat-card"><div class="stat-num green" id="stat-wins">0</div><div class="stat-label">成功记录</div></div>
+        <div class="stat-card"><div class="stat-num red" id="stat-fails">0</div><div class="stat-label">失败复盘</div></div>
+      </div>
+      <div class="divider">长期目标</div>
+      <div id="overview-long-goals"><div class="empty-state"><div class="empty-icon">◎</div>去"目标体系"添加你的长期目标</div></div>
+      <div class="divider">近期复盘</div>
+      <div id="overview-recent-logs"><div class="empty-state"><div class="empty-icon">◇</div>去"每日复盘"记录今天的成长</div></div>
+    </section>
+
+    <section class="section" id="section-goals">
+      <div class="page-header">
+        <div><div class="page-title">目标体系</div><div class="page-date">记录你的长期目标与阶段性目标</div></div>
+        <button class="btn btn-primary" onclick="openGoalModal()">＋ 新增目标</button>
+      </div>
+      <div class="section-header"><div class="section-title">▸ 长期目标</div></div>
+      <div class="goals-grid" id="long-term-goals"><div class="empty-state" style="grid-column:span 2"><div class="empty-icon">◎</div>还没有长期目标，写下你的北极星</div></div>
+      <div class="divider">STAGE GOALS</div>
+      <div class="section-header"><div class="section-title">▸ 阶段性目标</div></div>
+      <div class="goals-grid" id="stage-goals"><div class="empty-state" style="grid-column:span 2"><div class="empty-icon">◇</div>还没有阶段目标，将长期目标拆解为当前行动</div></div>
+    </section>
+
+    <section class="section" id="section-daily">
+      <div class="page-header">
+        <div><div class="page-title">每日复盘</div><div class="page-date">记录成功、失败与再来一次的选择</div></div>
+        <button class="btn btn-primary" onclick="openLogModal()">＋ 新增记录</button>
+      </div>
+      <div id="daily-logs-list"><div class="empty-state"><div class="empty-icon">◇</div>还没有复盘记录，开始记录你的成长轨迹</div></div>
+    </section>
+  </main>
+</div>
+
+<!-- GOAL MODAL -->
+<div class="modal-overlay" id="goal-modal">
+  <div class="modal">
+    <div class="modal-title" id="goal-modal-title">新增目标</div>
+    <div class="form-group">
+      <label class="form-label">目标类型</label>
+      <div class="type-toggle">
+        <input type="radio" name="goal-type" id="type-long" value="long" checked="">
+        <label for="type-long">🔮 长期目标</label>
+        <input type="radio" name="goal-type" id="type-stage" value="stage">
+        <label for="type-stage">⚡ 阶段目标</label>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">目标名称</label><input class="form-input" id="goal-title" placeholder="写下你的目标"></div>
+    <div class="form-group"><label class="form-label">详细描述</label><textarea class="form-textarea" id="goal-desc" placeholder="为什么这个目标对你重要？"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">目标期限</label><input class="form-input" type="date" id="goal-deadline"></div>
+      <div class="form-group"><label class="form-label">完成进度 (%)</label><input class="form-input" type="number" id="goal-progress" placeholder="0" min="0" max="100"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeGoalModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveGoal()">保存目标</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG MODAL -->
+<div class="modal-overlay" id="log-modal">
+  <div class="modal">
+    <div class="modal-title">新增复盘记录</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">日期</label><input class="form-input" type="date" id="log-date"></div>
+      <div class="form-group">
+        <label class="form-label">记录类型</label>
+        <div class="type-toggle">
+          <input type="radio" name="log-type" id="log-win" value="win" checked="">
+          <label for="log-win">✓ 成功</label>
+          <input type="radio" name="log-type" id="log-fail" value="fail">
+          <label for="log-fail">✗ 失败</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">发生了什么</label><textarea class="form-textarea" id="log-event" placeholder="描述今天发生的事情..."></textarea></div>
+    <div class="form-group"><label class="form-label">再来一次，你会怎么做</label><textarea class="form-textarea" id="log-redo-always" placeholder="无论成功还是失败，如果重来一次，你的策略是..."></textarea></div>
+    <div id="redo-section" style="display:none">
+      <div class="form-group"><label class="form-label">失败的核心原因</label><textarea class="form-textarea" id="log-reason" placeholder="为什么会失败？真正的原因是什么？" style="min-height:55px"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeLogModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveLog()">保存记录</button>
+    </div>
+  </div>
+</div>
+
+<script src="./成长罗盘_files/cb=gapi.loaded_0" async=""></script><script src="./成长罗盘_files/client" async=""></script>
+<script src="./成长罗盘_files/api.js.download" async="" gapi_processed="true"></script>
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+const DRIVE_FILE = 'growth-compass-data.json';
+let CLIENT_ID = localStorage.getItem('gc-client-id') || '';
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let data = { goals:[], logs:[] };
+let driveFileId = null;
+let tokenClient = null;
+let syncMode = 'local';
+let saveTimer = null;
+let gapiLoaded = false;
+let gisLoaded = false;
+
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+// ═══════════════════════════════════════════════
+// LOCAL STORAGE
+// ═══════════════════════════════════════════════
+function localSave(){ try{ localStorage.setItem('gc-data',JSON.stringify(data)); }catch(e){} }
+function localLoad(){ try{ const s=localStorage.getItem('gc-data'); if(s) data=JSON.parse(s); }catch(e){} }
+
+// ═══════════════════════════════════════════════
+// SETUP
+// ═══════════════════════════════════════════════
+function saveClientId(){
+  const v = document.getElementById('client-id-input').value.trim();
+  if(!v){ alert('请粘贴你的 Client ID'); return; }
+  CLIENT_ID = v;
+  localStorage.setItem('gc-client-id', CLIENT_ID);
+  closeSetup();
+  startGoogleAuth();
+}
+function skipSetup(){ closeSetup(); setSyncStatus('','本地模式','设置'); }
+function closeSetup(){ document.getElementById('setup-screen').style.display='none'; }
+function openSetup(){ document.getElementById('setup-screen').style.display='flex'; }
+
+// ═══════════════════════════════════════════════
+// GOOGLE AUTH + DRIVE
+// ═══════════════════════════════════════════════
+window.gapiLoaded_cb = function(){
+  gapiLoaded = true;
+  gapi.load('client', async ()=>{
+    await gapi.client.init({ discoveryDocs:['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+    maybeReady();
+  });
+};
+window.gisLoaded_cb = function(){
+  gisLoaded = true;
+  maybeReady();
+};
+
+function maybeReady(){
+  if(!gapiLoaded||!gisLoaded||!CLIENT_ID) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: async resp=>{
+      if(resp.error){ setSyncStatus('error','授权失败','重试'); return; }
+      sessionStorage.setItem('gc-token', JSON.stringify(gapi.client.getToken()));
+      syncMode='drive';
+      await pullFromDrive();
+    }
+  });
+  // Try silent auth via stored token
+  const saved = sessionStorage.getItem('gc-token');
+  if(saved){
+    gapi.client.setToken(JSON.parse(saved));
+    syncMode='drive';
+    setSyncStatus('syncing','同步中…','退出');
+    pullFromDrive();
+  } else {
+    setSyncStatus('','未登录','登录');
+  }
+}
+
+function startGoogleAuth(){
+  const waitAPIs = setInterval(()=>{
+    if(gapiLoaded&&gisLoaded){ clearInterval(waitAPIs); maybeReady(); }
+  },300);
+}
+
+function handleSyncBtn(){
+  if(!CLIENT_ID){ openSetup(); return; }
+  if(syncMode==='drive'){
+    try{ google.accounts.oauth2.revoke(gapi.client.getToken()?.access_token,()=>{}); }catch(e){}
+    gapi.client.setToken(null);
+    sessionStorage.removeItem('gc-token');
+    syncMode='local';
+    setSyncStatus('','未登录','登录');
+  } else {
+    if(!tokenClient){ openSetup(); return; }
+    tokenClient.requestAccessToken({prompt:''});
+  }
+}
+
+async function pullFromDrive(){
+  try{
+    const tok = gapi.client.getToken();
+    if(tok) sessionStorage.setItem('gc-token',JSON.stringify(tok));
+    const res = await gapi.client.drive.files.list({
+      spaces:'appDataFolder', fields:'files(id,name)', q:`name='${DRIVE_FILE}'`
+    });
+    const files = res.result.files;
+    if(files&&files.length>0){
+      driveFileId = files[0].id;
+      const content = await gapi.client.drive.files.get({ fileId:driveFileId, alt:'media' });
+      const remote = JSON.parse(content.body);
+      // Merge: keep whichever has more entries
+      if((remote.goals.length+remote.logs.length)>=(data.goals.length+data.logs.length)){
+        data = remote;
+      } else {
+        // push local up
+        await pushToDrive();
+      }
+    } else {
+      await pushToDrive(); // first time: create file
+    }
+    localSave();
+    renderAll();
+    setSyncStatus('synced','已同步','退出');
+  } catch(e){
+    console.error(e);
+    setSyncStatus('error','同步失败','重试');
+  }
+}
+
+async function pushToDrive(){
+  const body = JSON.stringify(data);
+  if(driveFileId){
+    await gapi.client.request({
+      path:`/upload/drive/v3/files/${driveFileId}`,
+      method:'PATCH',
+      params:{uploadType:'media'},
+      headers:{'Content-Type':'application/json'},
+      body
+    });
+  } else {
+    const boundary='-------GC';
+    const meta = {name:DRIVE_FILE,parents:['appDataFolder']};
+    const mp = `\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${boundary}--`;
+    const res = await gapi.client.request({
+      path:'/upload/drive/v3/files',method:'POST',
+      params:{uploadType:'multipart'},
+      headers:{'Content-Type':`multipart/related; boundary="${boundary}"`},
+      body:mp
+    });
+    driveFileId = res.result.id;
+  }
+}
+
+function setSyncStatus(state, text, btnText){
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot'+(state?' '+state:'');
+  document.getElementById('sync-text').textContent = text;
+  if(btnText!==undefined) document.getElementById('sync-btn').textContent = btnText;
+}
+
+// Debounced save: immediate local + delayed Drive push
+function saveData(){
+  localSave();
+  clearTimeout(saveTimer);
+  if(syncMode==='drive'){
+    setSyncStatus('syncing','保存中…','退出');
+    saveTimer = setTimeout(async()=>{
+      try{ await pushToDrive(); setSyncStatus('synced','已同步','退出'); }
+      catch(e){ setSyncStatus('error','同步失败','重试'); }
+    }, 1000);
+  }
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  a.download='成长罗盘_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(url);
+}
+function importData(){
+  const input=document.createElement('input'); input.type='file'; input.accept='.json';
+  input.onchange=async e=>{
+    const f=e.target.files[0]; if(!f)return;
+    try{
+      const p=JSON.parse(await f.text());
+      if(!p.goals||!p.logs) throw new Error();
+      data=p; saveData(); renderAll();
+      alert('✓ 导入成功，共 '+data.goals.length+' 个目标，'+data.logs.length+' 条记录');
+    }catch{ alert('导入失败：文件格式不正确'); }
+  };
+  input.click();
+}
+
+// ═══════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════
+function switchSection(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('section-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes(name)) n.classList.add('active');
+  });
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+function renderAll(){ renderStats(); renderGoals(); renderLogs(); renderOverview(); updateEntryCount(); }
+
+function renderStats(){
+  document.getElementById('stat-long').textContent=data.goals.filter(g=>g.type==='long').length;
+  document.getElementById('stat-stage').textContent=data.goals.filter(g=>g.type==='stage').length;
+  document.getElementById('stat-wins').textContent=data.logs.filter(l=>l.type==='win').length;
+  document.getElementById('stat-fails').textContent=data.logs.filter(l=>l.type==='fail').length;
+}
+
+function goalCardHTML(g){
+  const tc=g.type==='long'?'long-term':'stage', tgc=g.type==='long'?'tag-long':'tag-stage';
+  const tgt=g.type==='long'?'🔮 长期目标':'⚡ 阶段目标', p=parseInt(g.progress)||0;
+  const fc=g.type==='long'?'fill-gold':'fill-accent';
+  return `<div class="goal-card ${tc} ${g.complete?'complete':''}">
+    <div class="goal-actions">
+      <div class="btn-icon" onclick="toggleGoalComplete('${g.id}')">${g.complete?'↩':'✓'}</div>
+      <div class="btn-icon" onclick="editGoal('${g.id}')">✎</div>
+      <div class="btn-icon" onclick="deleteGoal('${g.id}')">✕</div>
+    </div>
+    <span class="goal-tag ${tgc}">${tgt}</span>
+    <div class="goal-title">${escHtml(g.title)}</div>
+    ${g.desc?`<div class="goal-desc">${escHtml(g.desc)}</div>`:''}
+    ${g.deadline?`<div class="goal-deadline">📅 ${g.deadline}</div>`:''}
+    <div class="progress-bar"><div class="progress-fill ${fc}" style="width:${p}%"></div></div>
+    <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px">${p}%</div>
+  </div>`;
+}
+
+function renderGoals(){
+  const lg=data.goals.filter(g=>g.type==='long'), sg=data.goals.filter(g=>g.type==='stage');
+  document.getElementById('long-term-goals').innerHTML=lg.length
+    ?lg.map(goalCardHTML).join('')
+    :`<div class="empty-state" style="grid-column:span 2"><div class="empty-icon">◎</div>还没有长期目标，写下你的北极星</div>`;
+  document.getElementById('stage-goals').innerHTML=sg.length
+    ?sg.map(goalCardHTML).join('')
+    :`<div class="empty-state" style="grid-column:span 2"><div class="empty-icon">◇</div>还没有阶段目标，将长期目标拆解为当前行动</div>`;
+}
+
+function renderLogs(){
+  const el=document.getElementById('daily-logs-list');
+  if(!data.logs.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">◇</div>还没有复盘记录，开始记录你的成长轨迹</div>`;return;}
+  const byDate={};
+  data.logs.forEach(l=>{if(!byDate[l.date])byDate[l.date]=[];byDate[l.date].push(l);});
+  el.innerHTML=Object.keys(byDate).sort().reverse().map(date=>{
+    const logs=byDate[date], wins=logs.filter(l=>l.type==='win').length, fails=logs.filter(l=>l.type==='fail').length;
+    const dayId='day-'+date.replace(/-/g,'');
+    const items=logs.map(l=>{
+      const isWin=l.type==='win';
+      return `<div class="log-item">
+        <div class="log-dot ${isWin?'dot-win':'dot-fail'}"></div>
+        <div class="log-content">
+          <div class="log-text">${escHtml(l.event)}</div>
+          ${(l.reason||l.redo)?`<div class="log-redo">
+            ${l.reason?`<span class="log-redo-label">失败原因</span>${escHtml(l.reason)}`:''}
+            ${l.redo?`<span class="log-redo-label" style="margin-top:6px;display:block">再来一次</span>${escHtml(l.redo)}`:''}</div>`:''}
+        </div>
+        <div class="btn-icon" onclick="deleteLog('${l.id}')" style="flex-shrink:0;opacity:0.35" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.35">✕</div>
+      </div>`;
+    }).join('');
+    return `<div class="day-block">
+      <div class="day-header" onclick="toggleDay('${dayId}')">
+        <div class="day-date">${date}</div>
+        <div class="day-summary">
+          ${wins?`<span class="summary-pill pill-win">✓ ${wins}</span>`:''}
+          ${fails?`<span class="summary-pill pill-fail">✗ ${fails}</span>`:''}
+        </div>
+      </div>
+      <div class="day-body" id="${dayId}">${items}</div>
+    </div>`;
+  }).join('');
+  const today=new Date().toISOString().slice(0,10);
+  const te=document.getElementById('day-'+today.replace(/-/g,''));
+  if(te){te.classList.add('open');te.previousElementSibling.classList.add('open');}
+}
+
+function toggleDay(id){
+  const b=document.getElementById(id); b.classList.toggle('open'); b.previousElementSibling.classList.toggle('open');
+}
+
+function renderOverview(){
+  const lg=data.goals.filter(g=>g.type==='long'&&!g.complete);
+  document.getElementById('overview-long-goals').innerHTML=lg.length
+    ?`<div class="goals-grid">${lg.map(goalCardHTML).join('')}</div>`
+    :`<div class="empty-state"><div class="empty-icon">◎</div>去"目标体系"添加你的长期目标</div>`;
+  const recent=[...data.logs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  document.getElementById('overview-recent-logs').innerHTML=recent.length
+    ?recent.map(l=>{
+        const iw=l.type==='win';
+        return `<div class="card" style="display:flex;gap:12px;padding:14px 18px;align-items:flex-start">
+          <div class="log-dot ${iw?'dot-win':'dot-fail'}" style="margin-top:5px;flex-shrink:0"></div>
+          <div style="flex:1">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+              <span style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted)">${l.date}</span>
+              <span class="summary-pill ${iw?'pill-win':'pill-fail'}">${iw?'成功':'失败'}</span>
+            </div>
+            <div style="font-size:13px">${escHtml(l.event)}</div>
+            ${l.redo?`<div class="log-redo"><span class="log-redo-label">再来一次</span>${escHtml(l.redo)}</div>`:''}
+          </div>
+        </div>`;
+      }).join('')
+    :`<div class="empty-state"><div class="empty-icon">◇</div>去"每日复盘"记录今天的成长</div>`;
+}
+
+function updateEntryCount(){ document.getElementById('entry-count').textContent=data.goals.length+data.logs.length; }
+
+// ═══════════════════════════════════════════════
+// GOAL MODAL
+// ═══════════════════════════════════════════════
+let editingGoalId=null;
+function openGoalModal(id){
+  editingGoalId=id||null;
+  if(id){
+    const g=data.goals.find(g=>g.id===id);
+    document.getElementById('goal-modal-title').textContent='编辑目标';
+    document.querySelector(`input[name="goal-type"][value="${g.type}"]`).checked=true;
+    document.getElementById('goal-title').value=g.title;
+    document.getElementById('goal-desc').value=g.desc||'';
+    document.getElementById('goal-deadline').value=g.deadline||'';
+    document.getElementById('goal-progress').value=g.progress||'';
+  } else {
+    document.getElementById('goal-modal-title').textContent='新增目标';
+    ['goal-title','goal-desc','goal-deadline','goal-progress'].forEach(i=>document.getElementById(i).value='');
+    document.querySelector('input[name="goal-type"][value="long"]').checked=true;
+  }
+  document.getElementById('goal-modal').classList.add('open');
+}
+function closeGoalModal(){document.getElementById('goal-modal').classList.remove('open');editingGoalId=null;}
+function saveGoal(){
+  const title=document.getElementById('goal-title').value.trim();
+  if(!title){alert('请输入目标名称');return;}
+  const type=document.querySelector('input[name="goal-type"]:checked').value;
+  const desc=document.getElementById('goal-desc').value.trim();
+  const deadline=document.getElementById('goal-deadline').value;
+  const progress=document.getElementById('goal-progress').value;
+  if(editingGoalId){
+    const idx=data.goals.findIndex(g=>g.id===editingGoalId);
+    data.goals[idx]={...data.goals[idx],type,title,desc,deadline,progress};
+  }else{
+    data.goals.push({id:genId(),type,title,desc,deadline,progress,complete:false,createdAt:Date.now()});
+  }
+  saveData();closeGoalModal();renderAll();
+}
+function editGoal(id){openGoalModal(id);}
+function deleteGoal(id){
+  if(!confirm('确定删除这个目标？'))return;
+  data.goals=data.goals.filter(g=>g.id!==id);saveData();renderAll();
+}
+function toggleGoalComplete(id){
+  const g=data.goals.find(g=>g.id===id);g.complete=!g.complete;saveData();renderAll();
+}
+
+// ═══════════════════════════════════════════════
+// LOG MODAL
+// ═══════════════════════════════════════════════
+function openLogModal(){
+  document.getElementById('log-date').value=new Date().toISOString().slice(0,10);
+  ['log-event','log-redo-always','log-reason'].forEach(i=>document.getElementById(i).value='');
+  document.querySelector('input[name="log-type"][value="win"]').checked=true;
+  document.getElementById('redo-section').style.display='none';
+  document.getElementById('log-modal').classList.add('open');
+}
+function closeLogModal(){document.getElementById('log-modal').classList.remove('open');}
+document.querySelectorAll('input[name="log-type"]').forEach(r=>{
+  r.addEventListener('change',()=>{
+    document.getElementById('redo-section').style.display=
+      document.querySelector('input[name="log-type"]:checked').value==='fail'?'block':'none';
+  });
+});
+function saveLog(){
+  const date=document.getElementById('log-date').value;
+  const event=document.getElementById('log-event').value.trim();
+  if(!date||!event){alert('请填写日期和事件描述');return;}
+  const type=document.querySelector('input[name="log-type"]:checked').value;
+  data.logs.push({id:genId(),date,type,event,
+    reason:document.getElementById('log-reason').value.trim(),
+    redo:document.getElementById('log-redo-always').value.trim(),
+    createdAt:Date.now()});
+  saveData();closeLogModal();renderAll();
+}
+function deleteLog(id){
+  if(!confirm('确定删除这条记录？'))return;
+  data.logs=data.logs.filter(l=>l.id!==id);saveData();renderAll();
+}
+
+function escHtml(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o){o.classList.remove('open');editingGoalId=null;}});
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.getElementById('today-date').textContent=new Date().toLocaleDateString('zh-CN',{
+  year:'numeric',month:'long',day:'numeric',weekday:'long'
+});
+localLoad();
+renderAll();
+
+if(CLIENT_ID){
+  startGoogleAuth();
+} else {
+  openSetup();
+}
+</script>
+
+<!-- Load Google APIs with callbacks -->
+<script src="./成长罗盘_files/client" onload="gisLoaded_cb()" async="" defer=""></script>
+<script src="./成长罗盘_files/api.js.download" onload="gapiLoaded_cb()" async="" defer="" gapi_processed="true"></script>
+
+
+<iframe id="apiproxy43a3ff664501381f4e2918ca4c9bd690dec1decf0.1019744284" name="apiproxy43a3ff664501381f4e2918ca4c9bd690dec1decf0.1019744284" src="./成长罗盘_files/proxy.html" tabindex="-1" aria-hidden="true" style="width: 1px; height: 1px; position: absolute; top: -100px; display: none;"></iframe></body></html>
